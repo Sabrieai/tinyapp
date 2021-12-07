@@ -20,6 +20,16 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL];
+  if (!urlDatabase[shortURL]) {//if they put in a shortURL that doesn't exist in our database
+    res.send("It appears that URL does not exist. Consider checking My URLs again or making a tinyURL for that website!");
+  } else {
+    res.redirect(longURL);
+  }
+});
+
 app.get("/", (req, res) => {
   // what is seen when enters localhost:8080
   res.send("Hello!");
