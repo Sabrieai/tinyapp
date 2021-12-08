@@ -16,6 +16,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  1: {
+    id: 1,
+    email: "a@a.com",
+    password: "a"
+  },
+  2: {
+    id: 2,
+    email: "b@b.com",
+    password: "b"
+  }
+};
+
 app.post("/urls", (req, res) => {
   // short url is the key and long url is the value and redirects
   const shortURL = generateRandomString();
@@ -38,6 +51,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+app.post("/register", (req, res) => {
+  // create a user after registration and saves their id as user_id in cookies
+  const id = generateRandomString();
+  users[id] = {
+    id,
+    email: req.body.email,
+    password: req.body.password
+  };
+  res.cookie("user_id", id);
+  res.redirect("/urls");
+});
 app.post("/login", (req, res) => {
   //Sets cookie named Username to your Username at login
   res.cookie('username', req.body.username);
@@ -66,9 +90,10 @@ app.get("/", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
+  // updated usrname to user
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies.username
+    user:users[req.cookies.user_id]
   };
   res.render("urls_index", templateVars);
 });
@@ -78,17 +103,19 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  //updated username to user
   const templateVars = {
-    username: req.cookies.username
+    user:users[req.cookies.user_id]
   };
   res.render("urls_new",templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  //updated username to user
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies.username
+    user:users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });

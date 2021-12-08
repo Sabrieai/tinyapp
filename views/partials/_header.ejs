@@ -11,15 +11,15 @@
       </div>
     </div>
     <div class="pull-right">
-      <% if(!username){ %>
+      <% if(!user){ %>
       <form method="POST" action="/login">
-        <label for="login">Logged In As: <%= username %></label>
+        <label for="login">Logged In As: <%= user.email %></label>
         <input type="text" name="username" placeholder="Username">
         <button type="submit" class="btn btn-outline-dark">Login</button>
       </form> 
       <%} else{%>
         <form method="POST" action="/logout">
-          <label for="logout">Logged In As: <%= username %></label>
+          <label for="logout">Logged In As: <%= user.email %></label>
           <button type="submit" class="btn btn-outline-dark">Logout</button>
         </form> 
         <% } %>
