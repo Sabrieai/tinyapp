@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const cookieParser = require('cookie-parser');
+const e = require("express");
 app.use(cookieParser());
 
 app.set("view engine", "ejs");
@@ -27,6 +28,17 @@ const users = {
     email: "b@b.com",
     password: "b"
   }
+};
+
+//function to be used in conditionals to see if user exists based on email
+const userEmailLookup = (email) => {
+  for (const userObj in users) {
+    const user = users[userObj];
+    if (user.email === email) {
+      return true;
+    }
+  }
+  return false;
 };
 
 app.post("/urls", (req, res) => {
@@ -53,11 +65,21 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/register", (req, res) => {
   // create a user after registration and saves their id as user_id in cookies
+  //added edgecase support
+  const email = req.body.email;
+  const password =  req.body.password;
+  const user = userEmailLookup(email);
+  if (!email || !password) {
+    return res.status(400).send("Both Email and Password need to be filled to register.");
+  }
+  if (user) {
+    return res.status(403).send("An account is already associated with this email try the login page.");
+  }
   const id = generateRandomString();
   users[id] = {
     id,
-    email: req.body.email,
-    password: req.body.password
+    email,
+    password
   };
   res.cookie("user_id", id);
   res.redirect("/urls");
