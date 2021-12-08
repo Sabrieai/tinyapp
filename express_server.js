@@ -20,6 +20,14 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+app.post("/urls/:id", (req, res) => {
+  // edit the url with short url in the address bar and newURL entered
+  const shortURL = req.params.id;
+  const newURL = req.body.newURL;
+  urlDatabase[shortURL] = newURL;
+  res.redirect("/urls");
+});
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   // delete the url based on the short url in the address bar
   const shortURL = req.params.shortURL;
