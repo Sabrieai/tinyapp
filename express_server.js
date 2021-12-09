@@ -18,11 +18,11 @@ const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userID: 1
+    userID: "1"
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userID: 1
+    userID: "1"
   }
 };
 
@@ -52,17 +52,28 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   // edit the url with short url in the address bar and newURL entered
+  // but only if you are logged as the correct user
   const shortURL = req.params.id;
   const newURL = req.body.newURL;
-  const userId = req.cookies.user_id;
-  urlDatabase[shortURL] = {longURL: newURL, userID: userId};
-  console.log(urlDatabase);
-  res.redirect("/urls");
+  const loggedIn = req.cookies.user_id;
+
+  if (loggedIn === urlDatabase[shortURL].userID) {
+    urlDatabase[shortURL] = {longURL: newURL, userID: loggedIn};
+    res.redirect("/urls");
+  } else {
+    res.send("You are nto authorized to edit this URL. Consider making your own 😃");
+  }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // delete the url based on the short url in the address bar
+  // but only if you are logged as the correct user
   const shortURL = req.params.shortURL;
+  const loggedIn = req.cookies.user_id;
+
+  if (loggedIn === urlDatabase[shortURL].userID) {
+    delete urlDatabase[shortURL];
+  }
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
@@ -85,6 +96,7 @@ app.post("/register", (req, res) => {
     email,
     password
   };
+  console.log(users);
   res.cookie("user_id", id);
   res.redirect("/urls");
 });
