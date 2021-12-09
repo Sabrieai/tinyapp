@@ -35,7 +35,7 @@ const userEmailLookup = (email) => {
   for (const userObj in users) {
     const user = users[userObj];
     if (user.email === email) {
-      return true;
+      return user;
     }
   }
   return false;
@@ -86,7 +86,26 @@ app.post("/register", (req, res) => {
 });
 app.post("/login", (req, res) => {
   //Sets cookie named user_id to your userid at login
-  res.cookie('username', req.body.username);
+  // also authenticates users
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = userEmailLookup(email);
+
+  if (!email || !password) {
+    return res.status(403).send("Both Email and Password need to be filled to login.");
+  }
+
+  if (!user) {
+    return res.status(403).send("There is no user with that email");
+  }
+
+  if (user.password !== password) {
+    console.log(user[password]);
+    return res.status(403).send('You have entered an incorrect password');
+    
+  }
+
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
@@ -125,7 +144,6 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  //updated username to user
   const templateVars = {
     user:users[req.cookies.user_id]
   };
@@ -133,7 +151,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  //updated username to user
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
@@ -144,16 +161,18 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   // allows users to enter registration page
-  const userid = req.cookies.user_id;
-  const user = users[userid];
-  res.render("register", user);
+  const templateVars = {
+    user:users[req.cookies.user_id]
+  };
+  res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
   // allows users to enter login page
-  const userid = req.cookies.user_id;
-  const user = users[userid];
-  res.render("login", user);
+  const templateVars = {
+    user:users[req.cookies.user_id]
+  };
+  res.render("login", templateVars);
 });
 
 app.get("/hello", (req, res) => {
