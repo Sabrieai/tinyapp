@@ -17,29 +17,9 @@ app.set("view engine", "ejs");
 const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
 
 
-const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "1"
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "2"
-  }
-};
+const urlDatabase = {};
 
-const users = {
-  1: {
-    id: 1,
-    email: "a@a.com",
-    password: "a"
-  },
-  2: {
-    id: 2,
-    email: "b@b.com",
-    password: "b"
-  }
-};
+const users = {};
 
 //POST requests
 
@@ -82,7 +62,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/register", (req, res) => {
   // create a user after registration and saves their id as user_id in cookies
-  //added edgecase support
+  //added edgecase support and hashed passwords instead of plain text
   const email = req.body.email;
   const password =  req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -107,6 +87,7 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   //Sets cookie named user_id to your userid at login
   // also authenticates users
+  // added ability to chechashed password against typed password
   const email = req.body.email;
   const password = req.body.password;
   const user = getUserByEmail(email,users);
@@ -119,7 +100,7 @@ app.post("/login", (req, res) => {
     return res.status(403).send("There is no user with that email");
   }
 
-  if (user.password !== password) {
+  if (!bcrypt.compareSync(password, user.password)) {
     console.log(user[password]);
     return res.status(403).send('You have entered an incorrect password');
     
