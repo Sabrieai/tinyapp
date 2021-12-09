@@ -85,13 +85,13 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 app.post("/login", (req, res) => {
-  //Sets cookie named Username to your Username at login
+  //Sets cookie named user_id to your userid at login
   res.cookie('username', req.body.username);
   res.redirect("/urls");
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
@@ -144,7 +144,16 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   // allows users to enter registration page
-  res.render("register");
+  const userid = req.cookies.user_id;
+  const user = users[userid];
+  res.render("register", user);
+});
+
+app.get("/login", (req, res) => {
+  // allows users to enter login page
+  const userid = req.cookies.user_id;
+  const user = users[userid];
+  res.render("login", user);
 });
 
 app.get("/hello", (req, res) => {
