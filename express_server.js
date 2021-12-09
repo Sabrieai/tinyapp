@@ -9,6 +9,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+const bcrypt = require('bcryptjs');
+
 app.set("view engine", "ejs");
 
 //functions and databases
@@ -22,7 +24,7 @@ const urlDatabase = {
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
-    userID: "1"
+    userID: "2"
   }
 };
 
@@ -83,7 +85,9 @@ app.post("/register", (req, res) => {
   //added edgecase support
   const email = req.body.email;
   const password =  req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const user = getUserByEmail(email,users);
+
   if (!email || !password) {
     return res.status(400).send("Both Email and Password need to be filled to register.");
   }
@@ -94,7 +98,7 @@ app.post("/register", (req, res) => {
   users[id] = {
     id,
     email,
-    password
+    password: hashedPassword
   };
   console.log(users);
   res.cookie("user_id", id);
