@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const cookieParser = require('cookie-parser');
+const e = require("express");
 app.use(cookieParser());
 
 app.set("view engine", "ejs");
@@ -14,6 +15,30 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
+};
+
+const users = {
+  1: {
+    id: 1,
+    email: "a@a.com",
+    password: "a"
+  },
+  2: {
+    id: 2,
+    email: "b@b.com",
+    password: "b"
+  }
+};
+
+//function to be used in conditionals to see if user exists based on email
+const userEmailLookup = (email) => {
+  for (const userObj in users) {
+    const user = users[userObj];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return false;
 };
 
 app.post("/urls", (req, res) => {
@@ -38,14 +63,54 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+app.post("/register", (req, res) => {
+  // create a user after registration and saves their id as user_id in cookies
+  //added edgecase support
+  const email = req.body.email;
+  const password =  req.body.password;
+  const user = userEmailLookup(email);
+  if (!email || !password) {
+    return res.status(400).send("Both Email and Password need to be filled to register.");
+  }
+  if (user) {
+    return res.status(403).send("An account is already associated with this email try the login page.");
+  }
+  const id = generateRandomString();
+  users[id] = {
+    id,
+    email,
+    password
+  };
+  res.cookie("user_id", id);
+  res.redirect("/urls");
+});
 app.post("/login", (req, res) => {
-  //Sets cookie named Username to your Username at login
-  res.cookie('username', req.body.username);
+  //Sets cookie named user_id to your userid at login
+  // also authenticates users
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = userEmailLookup(email);
+
+  if (!email || !password) {
+    return res.status(403).send("Both Email and Password need to be filled to login.");
+  }
+
+  if (!user) {
+    return res.status(403).send("There is no user with that email");
+  }
+
+  if (user.password !== password) {
+    console.log(user[password]);
+    return res.status(403).send('You have entered an incorrect password');
+    
+  }
+
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
@@ -66,9 +131,10 @@ app.get("/", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
+  // updated usrname to user
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies.username
+    user:users[req.cookies.user_id]
   };
   res.render("urls_index", templateVars);
 });
@@ -79,7 +145,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies.username
+    user:users[req.cookies.user_id]
   };
   res.render("urls_new",templateVars);
 });
@@ -88,13 +154,28 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies.username
+    user:users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
 
+app.get("/register", (req, res) => {
+  // allows users to enter registration page
+  const templateVars = {
+    user:users[req.cookies.user_id]
+  };
+  res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  // allows users to enter login page
+  const templateVars = {
+    user:users[req.cookies.user_id]
+  };
+  res.render("login", templateVars);
+});
+
 app.get("/hello", (req, res) => {
-  //
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
