@@ -13,8 +13,14 @@ app.set("view engine", "ejs");
 
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: 1
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: 1
+  }
 };
 
 const users = {
@@ -42,9 +48,11 @@ const userEmailLookup = (email) => {
 };
 
 app.post("/urls", (req, res) => {
-  // short url is the key and long url is the value and redirects
+  //using user_id so only registered and logged in users can create new tiny URLs.
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  const userId = req.cookies.user_id;
+  urlDatabase[shortURL] = {longURL: req.body.longURL, userID: userId};
+  console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -52,7 +60,9 @@ app.post("/urls/:id", (req, res) => {
   // edit the url with short url in the address bar and newURL entered
   const shortURL = req.params.id;
   const newURL = req.body.newURL;
-  urlDatabase[shortURL] = newURL;
+  const userId = req.cookies.user_id;
+  urlDatabase[shortURL] = {longURL: newURL, userID: userId};
+  console.log(urlDatabase);
   res.redirect("/urls");
 });
 
@@ -116,11 +126,11 @@ app.post('/logout', (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
-  if (!urlDatabase[shortURL]) {//if they put in a shortURL that doesn't exist in our database
+  if (urlDatabase[shortURL] === undefined) {//if they put in a shortURL that doesn't exist in our database
     res.send("It appears that URL does not exist. Consider checking My URLs again or making a tinyURL for that website!");
   } else {
-    res.redirect(longURL);
+    const longUrl = urlDatabase[shortURL].longURL;
+    res.redirect(longUrl);
   }
 });
 
@@ -144,6 +154,12 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  //webpage to create new URL
+  // if not logged in redirect to login page
+  const loggedIn = req.cookies.user_id;
+  if (!loggedIn) {
+    res.redirect("/login");
+  }
   const templateVars = {
     user:users[req.cookies.user_id]
   };
@@ -153,7 +169,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user:users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
@@ -161,6 +177,11 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   // allows users to enter registration page
+  //logged in redirects to /urls
+  const loggedIn = req.cookies.user_id;
+  if (loggedIn) {
+    res.redirect("/urls");
+  }
   const templateVars = {
     user:users[req.cookies.user_id]
   };
@@ -169,6 +190,11 @@ app.get("/register", (req, res) => {
 
 app.get("/login", (req, res) => {
   // allows users to enter login page
+  // if logged in redirects to /urls
+  const loggedIn = req.cookies.user_id;
+  if (loggedIn) {
+    res.redirect("/urls");
+  }
   const templateVars = {
     user:users[req.cookies.user_id]
   };
