@@ -1,3 +1,4 @@
+//App configurations
 const express = require("express");
 const app = express();
 const PORT = 8080;
@@ -6,10 +7,12 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const cookieParser = require('cookie-parser');
-const e = require("express");
 app.use(cookieParser());
 
 app.set("view engine", "ejs");
+
+//functions and databases
+const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
 
 
 const urlDatabase = {
@@ -36,16 +39,7 @@ const users = {
   }
 };
 
-//function to be used in conditionals to see if user exists based on email
-const userEmailLookup = (email) => {
-  for (const userObj in users) {
-    const user = users[userObj];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return false;
-};
+//POST requests
 
 app.post("/urls", (req, res) => {
   //using user_id so only registered and logged in users can create new tiny URLs.
@@ -78,7 +72,7 @@ app.post("/register", (req, res) => {
   //added edgecase support
   const email = req.body.email;
   const password =  req.body.password;
-  const user = userEmailLookup(email);
+  const user = getUserByEmail(email,users);
   if (!email || !password) {
     return res.status(400).send("Both Email and Password need to be filled to register.");
   }
@@ -99,7 +93,7 @@ app.post("/login", (req, res) => {
   // also authenticates users
   const email = req.body.email;
   const password = req.body.password;
-  const user = userEmailLookup(email);
+  const user = getUserByEmail(email,users);
 
   if (!email || !password) {
     return res.status(403).send("Both Email and Password need to be filled to login.");
@@ -124,6 +118,8 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
+//GET requests
+
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL] === undefined) {//if they put in a shortURL that doesn't exist in our database
@@ -141,9 +137,17 @@ app.get("/", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  // updated usrname to user
+  //display URLs only if user is logged in
+  //not logged in it should tell them  to login or register first.
+  const loggedIn = req.cookies.user_id;
+  if (!loggedIn) {
+    res.send("Login or Register to view your shortened URLs");
+  }
+  //users can only see their URLs
+  const displayedURLS = urlsForUser(loggedIn, urlDatabase);
+
   const templateVars = {
-    urls: urlDatabase,
+    urls: displayedURLS,
     user:users[req.cookies.user_id]
   };
   res.render("urls_index", templateVars);
@@ -209,7 +213,3 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-const generateRandomString = function() {
-// generates a unique shortURL, 6 random numbers and letters
-  return Math.random().toString(36).substring(2,7);
-};
