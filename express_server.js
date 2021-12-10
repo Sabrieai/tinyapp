@@ -132,7 +132,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.get("/", (req, res) => {
   const loggedIn = req.session.userId;
   if (!loggedIn) {
-    res.redirect("/login");
+    return res.redirect("/login");
   }
   res.redirect("/urls");
 
@@ -143,7 +143,7 @@ app.get("/urls", (req, res) => {
   
   const loggedIn = req.session.userId;
   if (!loggedIn) {
-    res.status(403).send("Login or Register to view your shortened URLs");
+    return res.status(403).send("Login or Register to view your shortened URLs");
   }
 
   const displayedURLS = urlsForUser(loggedIn, urlDatabase);
@@ -164,7 +164,7 @@ app.get("/urls/new", (req, res) => {
  
   const loggedIn = req.session.userId;
   if (!loggedIn) {
-    res.redirect("/login");
+    return res.redirect("/login");
   }
   const templateVars = {
     user:usersDatabase[req.session.userId]
@@ -177,16 +177,16 @@ app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const loggedIn = req.session.userId;
   if (!loggedIn) {
-    res.status(401).send("This is not your tinyapp link to edit, register to make your own!");
+    return res.status(401).send("This is not your tinyapp link to edit, register to make your own!");
   }
   const longURL =  urlDatabase[shortURL].longURL;
   const user = usersDatabase[loggedIn];
   const templateVars = { shortURL, longURL, user};
   if (longURL === undefined) {
-    res.status(404).send("Url does not exist");
+    return res.status(404).send("Url does not exist");
   }
   if (loggedIn !== urlDatabase[shortURL].userID) {
-    res.status(401).send("This is not your tinyapp link to edit, consider making your own!");
+    return res.status(401).send("This is not your tinyapp link to edit, consider making your own!");
   }
   res.render("urls_show", templateVars);
 });
@@ -196,7 +196,7 @@ app.get("/register", (req, res) => {
   
   const loggedIn = req.session.userId;
   if (loggedIn) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
   const templateVars = {
     user:usersDatabase[req.session.userId]
@@ -208,7 +208,7 @@ app.get("/login", (req, res) => {
   
   const loggedIn = req.session.userId;
   if (loggedIn) {
-    res.redirect("/urls");
+    return res.redirect("/urls");
   }
   const templateVars = {
     user:usersDatabase[req.session.userId]
