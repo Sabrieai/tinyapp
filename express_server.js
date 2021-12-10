@@ -27,7 +27,7 @@ const usersDatabase = {};
 
 //POST REQUESTS
 
-//using user_id so only registered and logged in users can create new tiny URLs.
+//using user_id so only logged in users can create new tiny URLs.
 app.post("/urls", (req, res) => {
 
   const shortURL = generateRandomString();
@@ -117,7 +117,7 @@ app.post('/logout', (req, res) => {
 
 //GET REQUESTS
 
-//redirects to the longURL from the short URL
+//redirects to the longURL from the shortURL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL] === undefined) {
@@ -172,6 +172,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new",templateVars);
 });
 
+// access to editing the shortURLs
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const loggedIn = req.session.userId;
@@ -187,15 +188,6 @@ app.get("/urls/:id", (req, res) => {
   if (loggedIn !== urlDatabase[shortURL].userID) {
     res.status(401).send("This is not your tinyapp link to edit, consider making your own!");
   }
-  res.render("urls_show", templateVars);
-});
-
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    user:usersDatabase[req.session.userId]
-  };
   res.render("urls_show", templateVars);
 });
 
@@ -228,6 +220,7 @@ app.get("/login", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

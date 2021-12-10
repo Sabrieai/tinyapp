@@ -10,17 +10,25 @@
 </head>
 <body>
   <%- include('partials/_header') %>
-  <h1> Create an account:</h1>
-  <div class="pull-center">
-    <form method="POST" action="/register">
-      <label for="email"> Enter your email here:</label>
-      <input type="email" name="email" placeholder="123@example.com">
-      <br>
-      <label for="password"> Set your password here:</label>
-      <input type="password" name="password" >
-      <br>
-      <button type="submit" class="btn btn-outline-dark">Register</button>
-    </form> 
-    </div>
-</body>
-</html>
+  
+
+ 
+  <main style="margin: 1em;">
+    <h2> Create an account:</h2>
+    <div class="pull-center">
+      <form class = form method="POST" action="/register">
+        <label for="email"> <b>Enter you email </b></label>
+        <br>
+        <input type="email" name="email">
+        <br>
+        <label for="password"> <b>Set your password </b></label>
+        <br>
+        <input type="password" name="password" >
+        <br>
+        <br>
+        <button type="submit" class="btn btn-primary" >Register</button>
+      </form> 
+    </main>
+      </div>
+  </body>
+  </html>
