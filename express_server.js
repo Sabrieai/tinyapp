@@ -24,20 +24,21 @@ const urlDatabase = {};
 
 const usersDatabase = {};
 
-//POST requests
 
+//POST REQUESTS
+
+//using user_id so only registered and logged in users can create new tiny URLs.
 app.post("/urls", (req, res) => {
-  //using user_id so only registered and logged in users can create new tiny URLs.
+
   const shortURL = generateRandomString();
   const userId = req.session.userId;
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: userId};
-  console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
 
+//allows logged in users to edit their own urls
 app.post("/urls/:id", (req, res) => {
-  // edit the url with short url in the address bar and newURL entered
-  // but only if you are logged as the correct user
+
   const shortURL = req.params.id;
   const newURL = req.body.newURL;
   const loggedIn = req.session.userId;
@@ -46,13 +47,13 @@ app.post("/urls/:id", (req, res) => {
     urlDatabase[shortURL] = {longURL: newURL, userID: loggedIn};
     res.redirect("/urls");
   } else {
-    res.status(403).send("You are nto authorized to edit this URL. Consider making your own 😃");
+    res.status(403).send("You are not authorized to edit this URL. Consider making your own 😃");
   }
 });
 
+//logged in users can delete their own urls
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // delete the url based on the short url in the address bar
-  // but only if you are logged as the correct user
+  
   const shortURL = req.params.shortURL;
   const loggedIn = req.session.userId;
 
@@ -63,9 +64,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+// create a user after registration and saves their id as user_id in cookies
 app.post("/register", (req, res) => {
-  // create a user after registration and saves their id as user_id in cookies
-  //added edgecase support and hashed passwords instead of plain text
+  
   const email = req.body.email;
   const password =  req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -78,19 +79,14 @@ app.post("/register", (req, res) => {
     return res.status(403).send("An account is already associated with this email try the login page.");
   }
   const id = generateRandomString();
-  usersDatabase[id] = {
-    id,
-    email,
-    password: hashedPassword
-  };
-  console.log(usersDatabase);
+  usersDatabase[id] = {id, email,password: hashedPassword};
   req.session.userId = id;
   res.redirect("/urls");
 });
+
+//Sets cookie named user_id  at login
 app.post("/login", (req, res) => {
-  //Sets cookie named user_id to your userid at login
-  // also authenticates users
-  // added ability to chechashed password against typed password
+  
   const email = req.body.email;
   const password = req.body.password;
   const user = getUserByEmail(email,usersDatabase);
@@ -113,16 +109,18 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+//logout and remove cookies
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 });
 
-//GET requests
+//GET REQUESTS
 
+//redirects to the longURL from the short URL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlDatabase[shortURL] === undefined) {//if they put in a shortURL that doesn't exist in our database
+  if (urlDatabase[shortURL] === undefined) {
     res.status(404).send("It appears that URL does not exist. Consider checking My URLs again or making a tinyURL for that website!");
   } else {
     const longUrl = urlDatabase[shortURL].longURL;
@@ -130,20 +128,24 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+
 app.get("/", (req, res) => {
-  // what is seen when enters localhost:8080
-  res.send("Hello!");
+  const loggedIn = req.session.userId;
+  if (!loggedIn) {
+    res.redirect("/login");
+  }
+  res.redirect("/urls");
+
 });
 
-
+//display URLs only if user is logged in
 app.get("/urls", (req, res) => {
-  //display URLs only if user is logged in
-  //not logged in it should tell them  to login or register first.
+  
   const loggedIn = req.session.userId;
   if (!loggedIn) {
     res.status(403).send("Login or Register to view your shortened URLs");
   }
-  //users can only see their URLs
+
   const displayedURLS = urlsForUser(loggedIn, urlDatabase);
 
   const templateVars = {
@@ -157,9 +159,9 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//webpage to create new URL if logged in
 app.get("/urls/new", (req, res) => {
-  //webpage to create new URL
-  // if not logged in redirect to login page
+ 
   const loggedIn = req.session.userId;
   if (!loggedIn) {
     res.redirect("/login");
@@ -168,6 +170,24 @@ app.get("/urls/new", (req, res) => {
     user:usersDatabase[req.session.userId]
   };
   res.render("urls_new",templateVars);
+});
+
+app.get("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+  const loggedIn = req.session.userId;
+  if (!loggedIn) {
+    res.status(401).send("This is not your tinyapp link to edit, register to make your own!");
+  }
+  const longURL =  urlDatabase[shortURL].longURL;
+  const user = usersDatabase[loggedIn];
+  const templateVars = { shortURL, longURL, user};
+  if (longURL === undefined) {
+    res.status(404).send("Url does not exist");
+  }
+  if (loggedIn !== urlDatabase[shortURL].userID) {
+    res.status(401).send("This is not your tinyapp link to edit, consider making your own!");
+  }
+  res.render("urls_show", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -179,9 +199,9 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+
 app.get("/register", (req, res) => {
-  // allows users to enter registration page
-  //logged in redirects to /urls
+  
   const loggedIn = req.session.userId;
   if (loggedIn) {
     res.redirect("/urls");
@@ -193,8 +213,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  // allows users to enter login page
-  // if logged in redirects to /urls
+  
   const loggedIn = req.session.userId;
   if (loggedIn) {
     res.redirect("/urls");
@@ -204,6 +223,7 @@ app.get("/login", (req, res) => {
   };
   res.render("login", templateVars);
 });
+
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
