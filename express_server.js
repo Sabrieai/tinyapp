@@ -84,7 +84,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword
   };
   console.log(usersDatabase);
-  req.session("user_id", id);
+  req.session.user_id = id;
   res.redirect("/urls");
 });
 app.post("/login", (req, res) => {
@@ -109,7 +109,7 @@ app.post("/login", (req, res) => {
     
   }
 
-  req.session('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
