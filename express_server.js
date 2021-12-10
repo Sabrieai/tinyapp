@@ -29,7 +29,7 @@ const usersDatabase = {};
 app.post("/urls", (req, res) => {
   //using user_id so only registered and logged in users can create new tiny URLs.
   const shortURL = generateRandomString();
-  const userId = req.session.user_id;
+  const userId = req.session.userId;
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: userId};
   console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
@@ -40,7 +40,7 @@ app.post("/urls/:id", (req, res) => {
   // but only if you are logged as the correct user
   const shortURL = req.params.id;
   const newURL = req.body.newURL;
-  const loggedIn = req.session.user_id;
+  const loggedIn = req.session.userId;
 
   if (loggedIn === urlDatabase[shortURL].userID) {
     urlDatabase[shortURL] = {longURL: newURL, userID: loggedIn};
@@ -54,7 +54,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   // delete the url based on the short url in the address bar
   // but only if you are logged as the correct user
   const shortURL = req.params.shortURL;
-  const loggedIn = req.session.user_id;
+  const loggedIn = req.session.userId;
 
   if (loggedIn === urlDatabase[shortURL].userID) {
     delete urlDatabase[shortURL];
@@ -84,7 +84,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword
   };
   console.log(usersDatabase);
-  req.session.user_id = id;
+  req.session.userId = id;
   res.redirect("/urls");
 });
 app.post("/login", (req, res) => {
@@ -109,7 +109,7 @@ app.post("/login", (req, res) => {
     
   }
 
-  req.session.user_id = user.id;
+  req.session.userId = user.id;
   res.redirect("/urls");
 });
 
@@ -139,7 +139,7 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   //display URLs only if user is logged in
   //not logged in it should tell them  to login or register first.
-  const loggedIn = req.session.user_id;
+  const loggedIn = req.session.userId;
   if (!loggedIn) {
     res.status(403).send("Login or Register to view your shortened URLs");
   }
@@ -148,7 +148,7 @@ app.get("/urls", (req, res) => {
 
   const templateVars = {
     urls: displayedURLS,
-    user:usersDatabase[req.session.user_id]
+    user:usersDatabase[req.session.userId]
   };
   res.render("urls_index", templateVars);
 });
@@ -160,12 +160,12 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls/new", (req, res) => {
   //webpage to create new URL
   // if not logged in redirect to login page
-  const loggedIn = req.session.user_id;
+  const loggedIn = req.session.userId;
   if (!loggedIn) {
     res.redirect("/login");
   }
   const templateVars = {
-    user:usersDatabase[req.session.user_id]
+    user:usersDatabase[req.session.userId]
   };
   res.render("urls_new",templateVars);
 });
@@ -174,7 +174,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user:usersDatabase[req.session.user_id]
+    user:usersDatabase[req.session.userId]
   };
   res.render("urls_show", templateVars);
 });
@@ -182,12 +182,12 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/register", (req, res) => {
   // allows users to enter registration page
   //logged in redirects to /urls
-  const loggedIn = req.session.user_id;
+  const loggedIn = req.session.userId;
   if (loggedIn) {
     res.redirect("/urls");
   }
   const templateVars = {
-    user:usersDatabase[req.session.user_id]
+    user:usersDatabase[req.session.userId]
   };
   res.render("register", templateVars);
 });
@@ -195,12 +195,12 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   // allows users to enter login page
   // if logged in redirects to /urls
-  const loggedIn = req.session.user_id;
+  const loggedIn = req.session.userId;
   if (loggedIn) {
     res.redirect("/urls");
   }
   const templateVars = {
-    user:usersDatabase[req.session.user_id]
+    user:usersDatabase[req.session.userId]
   };
   res.render("login", templateVars);
 });
